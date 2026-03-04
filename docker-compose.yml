@@ -1,0 +1,91 @@
+# ============================================================
+# PAMP — Docker Compose
+# Production deployment for Azure VM (Ubuntu Server)
+# ============================================================
+
+services:
+
+  # ── PostgreSQL Database ─────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: pamp_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # Persistent data — survives container rebuild
+      - pamp_pgdata:/var/lib/postgresql/data
+      # Schema and seed — only runs on FIRST start (empty volume)
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed_data.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - ./database/add_users.sql:/docker-entrypoint-initdb.d/03-users.sql:ro
+    networks:
+      - pamp_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── FastAPI Backend ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pamp_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
+    networks:
+      - pamp_net
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── Next.js Frontend ────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Baked in at build time — browser-visible API URL
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: pamp_frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    networks:
+      - pamp_net
+    depends_on:
+      - backend
+
+  # ── Nginx Reverse Proxy ─────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: pamp_nginx
+    restart: unless-stopped
+    ports:
+      # Only public-facing port — all traffic enters here
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - pamp_net
+    depends_on:
+      - frontend
+      - backend
+
+# ── Networks ───────────────────────────────────────────────────
+networks:
+  pamp_net:
+    driver: bridge
+
+# ── Volumes ────────────────────────────────────────────────────
+volumes:
+  pamp_pgdata:
+    driver: local
