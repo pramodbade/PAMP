@@ -13,7 +13,7 @@ CREATE TABLE users (
     username    VARCHAR(100) UNIQUE NOT NULL,
     email       VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role        VARCHAR(50) NOT NULL CHECK (role IN ('viewer', 'pentester', 'lead_pentester')),
+    role        VARCHAR(50) NOT NULL CHECK (role IN ('viewer', 'pentester', 'lead_pentester', 'admin')),
     is_active   BOOLEAN NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

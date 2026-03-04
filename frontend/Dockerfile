@@ -36,7 +36,6 @@ RUN addgroup -g 1001 -S pamp && adduser -u 1001 -S pamp -G pamp
 # Copy only what next start needs (standalone output)
 COPY --from=builder --chown=pamp:pamp /app/.next/standalone ./
 COPY --from=builder --chown=pamp:pamp /app/.next/static ./.next/static
-COPY --from=builder --chown=pamp:pamp /app/public ./public 2>/dev/null || true
 
 USER pamp
 
