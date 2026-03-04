@@ -13,7 +13,7 @@ INSERT INTO users (username, email, password_hash, role)
 VALUES (
   'myrah',
   'myrah@pamp.internal',
-  '$2b$12$Vu97UkyGAv6By.InSTOqluj7SwHpN9ldXO9Ga4.dW1wTr/q.kq2vu',
+  '$2b$12$FPoEwEojiVNItRUO5c5m/eVcedvRGQ3FNjeARH4DVClRZmQCv/hou',
   'pentester'
 )
 ON CONFLICT (username) DO NOTHING;
@@ -23,7 +23,7 @@ INSERT INTO users (username, email, password_hash, role)
 VALUES (
   'vidula',
   'vidula@pamp.internal',
-  '$2b$12$Vu97UkyGAv6By.InSTOqluj7SwHpN9ldXO9Ga4.dW1wTr/q.kq2vu',
+  '$2b$12$FPoEwEojiVNItRUO5c5m/eVcedvRGQ3FNjeARH4DVClRZmQCv/hou',
   'lead_pentester'
 )
 ON CONFLICT (username) DO NOTHING;

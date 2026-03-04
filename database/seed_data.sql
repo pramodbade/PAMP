@@ -3,11 +3,11 @@
 
 -- ============================================================
 -- DEFAULT ADMIN USER
--- Password: admin123 (bcrypt hash — change immediately in production)
+-- Password: Change1234! (bcrypt hash — change immediately in production)
 -- ============================================================
 INSERT INTO users (username, email, password_hash, role) VALUES
-('admin', 'admin@pamp.internal', '$2b$12$KJ3dI1o0CA6ZcfI09dAqTukrJGiNDABo2vxhPAh6nblk/S321Y0ge', 'lead_pentester'),
-('pentester1', 'pentester1@pamp.internal', '$2b$12$KJ3dI1o0CA6ZcfI09dAqTukrJGiNDABo2vxhPAh6nblk/S321Y0ge', 'pentester');
+('admin', 'admin@pamp.internal', '$2b$12$FPoEwEojiVNItRUO5c5m/eVcedvRGQ3FNjeARH4DVClRZmQCv/hou', 'lead_pentester'),
+('pentester1', 'pentester1@pamp.internal', '$2b$12$FPoEwEojiVNItRUO5c5m/eVcedvRGQ3FNjeARH4DVClRZmQCv/hou', 'pentester');
 
 -- ============================================================
 -- CHECKLIST TEMPLATE — Standard Security Checks

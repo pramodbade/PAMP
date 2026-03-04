@@ -1,27 +1,79 @@
-# ── Environment (NEVER commit) ─────────────────────────────────
+# ============================================================
+# PAMP — .gitignore
+# ============================================================
+
+# ── Environment — NEVER commit real secrets ─────────────────
 .env
 .env.local
 .env.production
+.env.staging
+.env.*.local
+# Keep .env.example (it's the safe template)
 
-# ── Python ─────────────────────────────────────────────────────
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 backend/venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/**/*.pyc
-backend/.pytest_cache/
+backend/.venv/
+dist/
+build/
 
-# ── Node.js ────────────────────────────────────────────────────
-frontend/node_modules/
+# ── Node.js ─────────────────────────────────────────────────
+node_modules/
+**/node_modules/
 frontend/.next/
+frontend/out/
 frontend/.env.local
+frontend/.env.production.local
+.npm/
+.yarn/
 
-# ── macOS ──────────────────────────────────────────────────────
+# ── Logs ────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── SSH / Credentials — never store keys in repo ────────────
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# ── OS / Editor ─────────────────────────────────────────────
 .DS_Store
-
-# ── Docker ─────────────────────────────────────────────────────
-# (docker-compose.yml and Dockerfiles are committed)
-
-# ── Editor ─────────────────────────────────────────────────────
+Thumbs.db
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+
+# ── Claude Code tool settings ───────────────────────────────
+.claude/
+
+# ── Temporary / misc ────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+coverage/
+.coverage
+htmlcov/
+
+# ── Docker runtime (never commit volumes or override files) ──
+docker-compose.override.yml
