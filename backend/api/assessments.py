@@ -1,14 +1,14 @@
 from uuid import UUID
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.assessment import Assessment, AssessmentPentester
 from models.checklist import ChecklistTemplate, ChecklistExecution
 from schemas.assessment import AssessmentCreate, AssessmentUpdate, AssessmentOut
-from services.auth_service import require_any, require_pentester, get_current_user
+from services.auth_service import require_any, require_pentester, require_lead, get_current_user
 from services.validation_service import validate_assessment_completion
 from models.user import User
 
@@ -87,9 +87,25 @@ def update_assessment(
 
 
 @router.delete("/{assessment_id}", status_code=204)
-def delete_assessment(assessment_id: UUID, db: Session = Depends(get_db), _=Depends(require_pentester)):
+def delete_assessment(
+    assessment_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     a = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="Assessment not found")
+
+    # Pentesters cannot delete a completed (submitted) assessment
+    if current_user.role == "pentester" and a.status == "Completed":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Pentesters cannot delete a completed assessment",
+        )
+
+    # Viewers have no delete permission at all
+    if current_user.role == "viewer":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+
     db.delete(a)
     db.commit()

@@ -8,7 +8,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import auth, products, assessments, scope, endpoints, checklist, findings, blockers, custom_tests, summary, dashboard
+from api import auth, products, assessments, scope, endpoints, checklist, findings, blockers, custom_tests, summary, dashboard, admin
 
 app = FastAPI(
     title="PAMP — Pentest Assessment Management Platform",
@@ -40,6 +40,7 @@ app.include_router(blockers.router)
 app.include_router(custom_tests.router)
 app.include_router(summary.router)
 app.include_router(dashboard.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")

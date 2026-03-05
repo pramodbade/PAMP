@@ -6,8 +6,8 @@
 -- Password: Change1234! (bcrypt hash — change immediately in production)
 -- ============================================================
 INSERT INTO users (username, email, password_hash, role) VALUES
-('admin', 'admin@pamp.internal', '$2b$12$FPoEwEojiVNItRUO5c5m/eVcedvRGQ3FNjeARH4DVClRZmQCv/hou', 'lead_pentester'),
-('pentester1', 'pentester1@pamp.internal', '$2b$12$FPoEwEojiVNItRUO5c5m/eVcedvRGQ3FNjeARH4DVClRZmQCv/hou', 'pentester');
+('admin', 'admin@pamp.internal', '$2b$12$Gi/OxTK99nMhwZT/ST1ZMeF0KTYzn2Vj50hBrTjJhurTL4dUez3AO', 'lead_pentester'),
+('pentester1', 'pentester1@pamp.internal', '$2b$12$Gi/OxTK99nMhwZT/ST1ZMeF0KTYzn2Vj50hBrTjJhurTL4dUez3AO', 'pentester');
 
 -- ============================================================
 -- CHECKLIST TEMPLATE — Standard Security Checks

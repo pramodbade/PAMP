@@ -29,6 +29,7 @@ export const login = (username, password) =>
   api.post('/auth/login', { username, password })
 
 export const getMe = () => api.get('/auth/me')
+export const changePassword = (data) => api.post('/auth/change-password', data)
 
 // ── Products ──────────────────────────────────────────────────────────────
 export const getProducts = () => api.get('/products')
@@ -97,5 +98,12 @@ export const globalSearch = (q) => api.get('/dashboard/search', { params: { q } 
 
 // ── Product Timeline ───────────────────────────────────────────────────────
 export const getProductTimeline = (productId) => api.get(`/dashboard/products/${productId}/timeline`)
+
+// ── Admin — User Management ───────────────────────────────────────────────
+export const adminGetUsers = () => api.get('/admin/users')
+export const adminCreateUser = (data) => api.post('/admin/users', data)
+export const adminUpdateRole = (userId, role) => api.put(`/admin/users/${userId}/role`, { role })
+export const adminUpdateStatus = (userId, is_active) => api.put(`/admin/users/${userId}/status`, { is_active })
+export const adminDeleteUser = (userId) => api.delete(`/admin/users/${userId}`)
 
 export default api

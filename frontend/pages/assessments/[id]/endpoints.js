@@ -120,6 +120,8 @@ export default function EndpointsPage() {
   const [showModal, setShowModal] = useState(false)
   const [showBurpModal, setShowBurpModal] = useState(false)
   const [form, setForm] = useState(EMPTY)
+  const [selected, setSelected] = useState(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   // Burp import state
   const [burpText, setBurpText] = useState('')
@@ -127,8 +129,35 @@ export default function EndpointsPage() {
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState(null)
 
-  const load = () => id && getEndpoints(id).then((r) => setEndpoints(r.data))
+  const load = () => id && getEndpoints(id).then((r) => { setEndpoints(r.data); setSelected(new Set()) })
   useEffect(() => { load() }, [id])
+
+  // ── Selection helpers ─────────────────────────────────────────────────────
+  const allSelected = endpoints.length > 0 && selected.size === endpoints.length
+  const someSelected = selected.size > 0 && !allSelected
+
+  const toggleSelect = (epId) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(epId) ? next.delete(epId) : next.add(epId)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setSelected(allSelected ? new Set() : new Set(endpoints.map((e) => e.id)))
+  }
+
+  // ── Bulk delete ───────────────────────────────────────────────────────────
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selected.size} selected endpoint${selected.size !== 1 ? 's' : ''}? This cannot be undone.`)) return
+    setBulkDeleting(true)
+    for (const epId of selected) {
+      try { await deleteEndpoint(id, epId) } catch { /* skip */ }
+    }
+    setBulkDeleting(false)
+    load()
+  }
 
   // ── Single add ────────────────────────────────────────────────────────────
   const handleAdd = async (e) => {
@@ -224,11 +253,42 @@ export default function EndpointsPage() {
         </div>
       </div>
 
+      {/* Bulk action toolbar */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-brand-50 border border-brand-200 rounded-lg">
+          <span className="text-sm font-medium text-brand-700">
+            {selected.size} endpoint{selected.size !== 1 ? 's' : ''} selected
+          </span>
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting}
+            className="btn-danger text-xs"
+          >
+            {bulkDeleting ? 'Deleting…' : `Delete ${selected.size} Selected`}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="text-xs text-gray-500 hover:text-gray-700 ml-auto"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       {/* Endpoint table */}
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b">
+              <th className="pb-2 w-8">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => { if (el) el.indeterminate = someSelected }}
+                  onChange={toggleSelectAll}
+                  className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                />
+              </th>
               <th className="pb-2 font-medium">Method</th>
               <th className="pb-2 font-medium">Path</th>
               <th className="pb-2 font-medium">Auth</th>
@@ -239,28 +299,39 @@ export default function EndpointsPage() {
             </tr>
           </thead>
           <tbody>
-            {endpoints.map((ep) => (
-              <tr key={ep.id} className="border-b last:border-0 hover:bg-gray-50">
-                <td className="py-2"><span className={METHOD_COLOR[ep.method] || 'badge-gray'}>{ep.method}</span></td>
-                <td className="py-2 font-mono text-xs">{ep.path}</td>
-                <td className="py-2">{ep.authentication_required ? 'Yes' : '-'}</td>
-                <td className="py-2 text-gray-500">{ep.role_required || '-'}</td>
-                <td className="py-2">
-                  <button
-                    onClick={() => toggleTested(ep)}
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${ep.tested_status ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
-                  >
-                    {ep.tested_status ? 'Tested' : 'Untested'}
-                  </button>
-                </td>
-                <td className="py-2 text-gray-500 text-xs">{ep.notes || '-'}</td>
-                <td className="py-2 text-right">
-                  <button onClick={() => handleDelete(ep.id)} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
-                </td>
-              </tr>
-            ))}
+            {endpoints.map((ep) => {
+              const isSelected = selected.has(ep.id)
+              return (
+                <tr key={ep.id} className={`border-b last:border-0 transition-colors ${isSelected ? 'bg-brand-50' : 'hover:bg-gray-50'}`}>
+                  <td className="py-2">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(ep.id)}
+                      className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                    />
+                  </td>
+                  <td className="py-2"><span className={METHOD_COLOR[ep.method] || 'badge-gray'}>{ep.method}</span></td>
+                  <td className="py-2 font-mono text-xs">{ep.path}</td>
+                  <td className="py-2">{ep.authentication_required ? 'Yes' : '-'}</td>
+                  <td className="py-2 text-gray-500">{ep.role_required || '-'}</td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => toggleTested(ep)}
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${ep.tested_status ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                    >
+                      {ep.tested_status ? 'Tested' : 'Untested'}
+                    </button>
+                  </td>
+                  <td className="py-2 text-gray-500 text-xs">{ep.notes || '-'}</td>
+                  <td className="py-2 text-right">
+                    <button onClick={() => handleDelete(ep.id)} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
+                  </td>
+                </tr>
+              )
+            })}
             {endpoints.length === 0 && (
-              <tr><td colSpan={7} className="py-6 text-center text-gray-400">No endpoints added yet.</td></tr>
+              <tr><td colSpan={8} className="py-6 text-center text-gray-400">No endpoints added yet.</td></tr>
             )}
           </tbody>
         </table>

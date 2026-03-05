@@ -4,7 +4,8 @@ import { useRouter } from 'next/router'
 import Layout from '../../components/Layout'
 import Modal from '../../components/Modal'
 import { StatusBadge } from '../../components/StatusBadge'
-import { getAssessments, createAssessment, getProducts } from '../../services/api'
+import { getAssessments, createAssessment, deleteAssessment, getProducts } from '../../services/api'
+import { getUser } from '../../services/auth'
 
 const EMPTY = { product_id: '', environment: 'Production', start_date: '', estimated_effort_days: '', lead_pentester: '' }
 
@@ -14,7 +15,10 @@ export default function AssessmentsPage() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
+  const [user, setUser] = useState(null)
   const router = useRouter()
+
+  useEffect(() => { setUser(getUser()) }, [])
 
   const load = () => getAssessments().then((r) => setAssessments(r.data))
 
@@ -37,6 +41,26 @@ export default function AssessmentsPage() {
     } finally { setSaving(false) }
   }
 
+  const handleDelete = async (a) => {
+    if (!confirm(`Delete this assessment for ${productName(a.product_id)}? This cannot be undone.`)) return
+    try {
+      await deleteAssessment(a.id)
+      load()
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to delete assessment')
+    }
+  }
+
+  // Deletion visibility rules:
+  // - viewer: never
+  // - pentester: only if NOT completed
+  // - lead_pentester / admin: always
+  const canDelete = (a) => {
+    if (!user || user.role === 'viewer') return false
+    if (user.role === 'pentester') return a.status !== 'Completed'
+    return true  // lead_pentester, admin
+  }
+
   const productName = (id) => products.find((p) => p.id === id)?.product_name || id
 
   return (
@@ -54,7 +78,7 @@ export default function AssessmentsPage() {
               <th className="pb-3 font-medium">Environment</th>
               <th className="pb-3 font-medium">Start Date</th>
               <th className="pb-3 font-medium">Status</th>
-              <th className="pb-3 font-medium"></th>
+              <th className="pb-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -65,7 +89,12 @@ export default function AssessmentsPage() {
                 <td className="py-3 text-gray-600">{a.start_date}</td>
                 <td className="py-3"><StatusBadge value={a.status} /></td>
                 <td className="py-3 text-right">
-                  <Link href={`/assessments/${a.id}`} className="btn-secondary text-xs">Open</Link>
+                  <div className="flex gap-2 justify-end">
+                    <Link href={`/assessments/${a.id}`} className="btn-secondary text-xs">Open</Link>
+                    {canDelete(a) && (
+                      <button onClick={() => handleDelete(a)} className="btn-danger text-xs">Delete</button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
